@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Number Guessing Game</title>
+<style>
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: Arial, sans-serif;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: #222;
+    }
+    .game {
+        width: min(92%, 500px);
+        background: white;
+        padding: 32px;
+        border-radius: 22px;
+        text-align: center;
+        box-shadow: 0 20px 50px rgba(0,0,0,.25);
+    }
+    h1 { margin: 0 0 8px; color: #5b3cc4; }
+    .subtitle { color: #666; margin-bottom: 24px; }
+    .level {
+        background: #f3efff;
+        border-radius: 14px;
+        padding: 14px;
+        margin-bottom: 20px;
+        font-weight: bold;
+    }
+    .range {
+        font-size: 18px;
+        margin: 15px 0;
+    }
+    input {
+        width: 100%;
+        padding: 14px;
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        font-size: 18px;
+        text-align: center;
+        outline: none;
+    }
+    input:focus { border-color: #6c4bd9; }
+    button {
+        width: 100%;
+        padding: 14px;
+        margin-top: 12px;
+        border: none;
+        border-radius: 10px;
+        background: #6c4bd9;
+        color: white;
+        font-size: 17px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    button:hover { background: #5638bd; }
+    button.secondary {
+        background: #eee;
+        color: #333;
+    }
+    .attempts {
+        margin-top: 18px;
+        font-weight: bold;
+    }
+    .message {
+        min-height: 28px;
+        margin: 18px 0 4px;
+        font-weight: bold;
+    }
+    .success { color: #159447; }
+    .error { color: #d93025; }
+    .hint { color: #e58a00; }
+    .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="game">
+    <h1>🎯 Number Guessing Game</h1>
+    <p class="subtitle">Guess the hidden number in only 3 attempts!</p>
+
+    <div class="level" id="levelText">Level 1 — Single Digit</div>
+    <div class="range" id="rangeText">Guess a number from <b>0 to 9</b></div>
+
+    <input type="number" id="guessInput" placeholder="Enter your guess">
+    <button id="guessBtn">Guess Number</button>
+
+    <div class="attempts" id="attemptsText">Attempts left: 3</div>
+    <div class="message" id="message"></div>
+
+    <button id="nextBtn" class="hidden">Go to Level 2</button>
+    <button id="restartBtn" class="secondary hidden">Play Again</button>
+</div>
+
+<script>
+let level = 1;
+let maxNumber = 9;
+let secretNumber = randomNumber(0, maxNumber);
+let attempts = 3;
+let gameFinished = false;
+
+const levelText = document.getElementById("levelText");
+const rangeText = document.getElementById("rangeText");
+const guessInput = document.getElementById("guessInput");
+const guessBtn = document.getElementById("guessBtn");
+const attemptsText = document.getElementById("attemptsText");
+const message = document.getElementById("message");
+const nextBtn = document.getElementById("nextBtn");
+const restartBtn = document.getElementById("restartBtn");
+
+function randomNumber(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function updateScreen() {
+    if (level === 1) {
+        levelText.textContent = "Level 1 — Single Digit";
+        rangeText.innerHTML = "Guess a number from <b>0 to 9</b>";
+    } else {
+        levelText.textContent = "Level 2 — Two Digit";
+        rangeText.innerHTML = "Guess a number from <b>10 to 99</b>";
+    }
+
+    attemptsText.textContent = "Attempts left: " + attempts;
+    guessInput.min = level === 1 ? 0 : 10;
+    guessInput.max = maxNumber;
+    guessInput.value = "";
+    guessInput.focus();
+}
+
+function startLevel2() {
+    level = 2;
+    maxNumber = 99;
+    secretNumber = randomNumber(10, 99);
+    attempts = 3;
+    gameFinished = false;
+
+    nextBtn.classList.add("hidden");
+    restartBtn.classList.add("hidden");
+    guessBtn.classList.remove("hidden");
+    guessInput.classList.remove("hidden");
+    message.textContent = "";
+    message.className = "message";
+
+    updateScreen();
+}
+
+function finishSuccess() {
+    gameFinished = true;
+    message.textContent = "🎉 SUCCESS! You guessed the correct number!";
+    message.className = "message success";
+    guessBtn.classList.add("hidden");
+    guessInput.classList.add("hidden");
+
+    if (level === 1) {
+        nextBtn.classList.remove("hidden");
+    } else {
+        restartBtn.classList.remove("hidden");
+    }
+}
+
+function finishGameOver() {
+    gameFinished = true;
+    message.textContent = "💀 GAME OVER! The number was " + secretNumber + ".";
+    message.className = "message error";
+    guessBtn.classList.add("hidden");
+    guessInput.classList.add("hidden");
+    restartBtn.classList.remove("hidden");
+}
+
+function checkGuess() {
+    if (gameFinished) return;
+
+    const guess = Number(guessInput.value);
+
+    if (!Number.isInteger(guess) || guess < (level === 1 ? 0 : 10) || guess > maxNumber) {
+        message.textContent = level === 1
+            ? "Please enter a number between 0 and 9."
+            : "Please enter a number between 10 and 99.";
+        message.className = "message error";
+        return;
+    }
+
+    attempts--;
+
+    if (guess === secretNumber) {
+        attemptsText.textContent = "Attempts left: " + attempts;
+        finishSuccess();
+        return;
+    }
+
+    attemptsText.textContent = "Attempts left: " + attempts;
+
+    if (attempts === 0) {
+        finishGameOver();
+    } else if (guess < secretNumber) {
+        message.textContent = "📈 Too low! Try a higher number.";
+        message.className = "message hint";
+    } else {
+        message.textContent = "📉 Too high! Try a lower number.";
+        message.className = "message hint";
+    }
+
+    guessInput.value = "";
+    guessInput.focus();
+}
+
+function restartGame() {
+    level = 1;
+    maxNumber = 9;
+    secretNumber = randomNumber(0, 9);
+    attempts = 3;
+    gameFinished = false;
+
+    message.textContent = "";
+    message.className = "message";
+    nextBtn.classList.add("hidden");
+    restartBtn.classList.add("hidden");
+    guessBtn.classList.remove("hidden");
+    guessInput.classList.remove("hidden");
+
+    updateScreen();
+}
+
+guessBtn.addEventListener("click", checkGuess);
+nextBtn.addEventListener("click", startLevel2);
+restartBtn.addEventListener("click", restartGame);
+
+guessInput.addEventListener("keydown", function(e) {
+    if (e.key === "Enter") checkGuess();
+});
+
+updateScreen();
+</script>
+
+</body>
+</html>
